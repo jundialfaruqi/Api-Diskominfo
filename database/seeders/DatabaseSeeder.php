@@ -14,12 +14,8 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
-        User::factory()->create([
-            'name' => 'jundi',
-            'email' => 'jundi@mail.com',
-            'password' => Hash::make('admin123'), // Gunakan hash agar sesuai Laravel Auth
+        $this->call([
+            UserSeeder::class,
         ]);
     }
 }
