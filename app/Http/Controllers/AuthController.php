@@ -27,16 +27,52 @@ class AuthController extends Controller
             ], 401);
         }
 
+        $user = auth('api')->user();
+        $user->load('roles', 'permissions');
+        
+        // Format permissions untuk frontend (sama seperti method me())
+        $formattedPermissions = $user->getAllPermissions()->map(function($permission) {
+            return [
+                'id' => $permission->id,
+                'name' => $permission->name
+            ];
+        });
+        
+        // Tambahkan permissions ke user object
+        $userData = $user->toArray();
+        $userData['permissions'] = $formattedPermissions;
+        
         return response()->json([
             'message' => 'Login berhasil',
             'token' => $token,
-            'user' => auth('api')->user()
+            'user' => $userData,
+            'roles' => $user->getRoleNames(),
+            'permissions' => $user->getAllPermissions()->pluck('name')
         ]);
     }
 
     public function me()
     {
-        return response()->json(auth('api')->user());
+        $user = auth('api')->user();
+        $user->load('roles', 'permissions');
+        
+        // Format permissions untuk frontend
+        $formattedPermissions = $user->getAllPermissions()->map(function($permission) {
+            return [
+                'id' => $permission->id,
+                'name' => $permission->name
+            ];
+        });
+        
+        // Tambahkan permissions ke user object
+        $userData = $user->toArray();
+        $userData['permissions'] = $formattedPermissions;
+        
+        return response()->json([
+            'user' => $userData,
+            'roles' => $user->getRoleNames(),
+            'permissions' => $user->getAllPermissions()->pluck('name')
+        ]);
     }
 
     public function register(Request $request)

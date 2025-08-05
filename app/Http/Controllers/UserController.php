@@ -8,6 +8,8 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use Spatie\Permission\Models\Role;
+use Spatie\Permission\Models\Permission;
 
 class UserController extends Controller
 {
@@ -31,7 +33,9 @@ class UserController extends Controller
 
             // Filter by role
             if ($request->has('role') && !empty($request->role)) {
-                $query->where('role', $request->role);
+                $query->whereHas('roles', function ($q) use ($request) {
+                    $q->where('name', $request->role);
+                });
             }
 
             // Filter by status
@@ -41,7 +45,7 @@ class UserController extends Controller
 
             // Pagination
             $perPage = $request->get('per_page', 10);
-            $users = $query->orderBy('created_at', 'desc')->paginate($perPage);
+            $users = $query->with('roles')->orderBy('created_at', 'desc')->paginate($perPage);
 
             return response()->json([
                 'success' => true,
@@ -68,7 +72,7 @@ class UserController extends Controller
                 'name' => 'required|string|max:255',
                 'email' => 'required|string|email|max:255|unique:users',
                 'password' => 'required|string|min:8|confirmed',
-                'role' => 'required|in:super_admin,editor',
+                'role' => 'required|exists:roles,name',
                 'department' => 'required|string|max:255',
                 'phone' => 'nullable|string|max:20',
                 'status' => 'required|in:active,inactive'
@@ -101,11 +105,13 @@ class UserController extends Controller
                 'name' => $request->name,
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
-                'role' => $request->role,
                 'department' => $request->department,
                 'phone' => $request->phone,
                 'status' => $request->status
             ]);
+
+            // Assign role using Spatie Permission
+            $user->assignRole($request->role);
 
             return response()->json([
                 'success' => true,
@@ -208,7 +214,6 @@ class UserController extends Controller
             $updateData = [
                 'name' => $request->name,
                 'email' => $request->email,
-                'role' => $request->role,
                 'department' => $request->department,
                 'phone' => $request->phone,
                 'status' => $request->status
@@ -220,6 +225,9 @@ class UserController extends Controller
             }
 
             $user->update($updateData);
+
+            // Update role using Spatie Permission
+            $user->syncRoles([$request->role]);
 
             return response()->json([
                 'success' => true,
@@ -285,8 +293,12 @@ class UserController extends Controller
                 'total_users' => User::count(),
                 'active_users' => User::where('status', 'active')->count(),
                 'inactive_users' => User::where('status', 'inactive')->count(),
-                'super_admins' => User::where('role', 'super_admin')->count(),
-                'editors' => User::where('role', 'editor')->count(),
+                'super_admins' => User::whereHas('roles', function($q) {
+                    $q->where('name', 'super_admin');
+                })->count(),
+                'editors' => User::whereHas('roles', function($q) {
+                    $q->where('name', 'editor');
+                })->count(),
             ];
 
             return response()->json([
