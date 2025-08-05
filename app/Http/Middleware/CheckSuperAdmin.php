@@ -25,7 +25,7 @@ class CheckSuperAdmin
         if (!auth()->user()->hasRole('super_admin')) {
             return response()->json([
                 'success' => false,
-                'message' => 'Access denied. Super admin role required.'
+                'message' => 'Access denied.'
             ], 403);
         }
 
