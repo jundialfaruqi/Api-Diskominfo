@@ -12,13 +12,34 @@ class PermissionController extends Controller
     /**
      * Display a listing of the permissions.
      */
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        $permissions = Permission::all();
-        
-        return response()->json([
-            'data' => $permissions
-        ]);
+        try {
+            $query = Permission::query();
+
+            // Search functionality
+            if ($request->has('search') && !empty($request->search)) {
+                $search = $request->search;
+                $query->where('name', 'like', "%{$search}%");
+            }
+
+            // Pagination
+            $perPage = $request->get('per_page', 10);
+            $permissions = $query->orderBy('created_at', 'desc')->paginate($perPage);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Permissions retrieved successfully',
+                'data' => $permissions
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to retrieve permissions',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
@@ -186,6 +207,29 @@ class PermissionController extends Controller
     /**
      * Get all permissions grouped by category/module.
      */
+    /**
+     * Get all permissions without pagination (for roles management)
+     */
+    public function all(): JsonResponse
+    {
+        try {
+            $permissions = Permission::orderBy('name', 'asc')->get();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'All permissions retrieved successfully',
+                'data' => $permissions
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to retrieve permissions',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
     public function grouped(): JsonResponse
     {
         $permissions = Permission::all();
@@ -197,5 +241,48 @@ class PermissionController extends Controller
         });
 
         return response()->json($grouped);
+    }
+
+    /**
+     * Get permission statistics.
+     */
+    public function stats(): JsonResponse
+    {
+        try {
+            $allPermissions = Permission::all();
+            $now = new \DateTime();
+            $oneWeekAgo = (clone $now)->modify('-7 days');
+            
+            $systemPermissions = $allPermissions->filter(function ($permission) {
+                return str_contains($permission->name, 'view') || 
+                       str_contains($permission->name, 'create') || 
+                       str_contains($permission->name, 'edit') || 
+                       str_contains($permission->name, 'delete');
+            })->count();
+            
+            $recentPermissions = $allPermissions->filter(function ($permission) use ($oneWeekAgo) {
+                return new \DateTime($permission->created_at) > $oneWeekAgo;
+            })->count();
+            
+            $stats = [
+                'total_permissions' => $allPermissions->count(),
+                'system_permissions' => $systemPermissions,
+                'custom_permissions' => $allPermissions->count() - $systemPermissions,
+                'recent_permissions' => $recentPermissions
+            ];
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Permission statistics retrieved successfully',
+                'data' => $stats
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to retrieve permission statistics',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 }

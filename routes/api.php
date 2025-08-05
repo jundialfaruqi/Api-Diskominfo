@@ -25,6 +25,9 @@ Route::middleware('auth:api')->group(function () {
         Route::apiResource('users', UserController::class);
     });
     
+    // Permission statistics - accessible to users with permission management access
+    Route::get('permissions/stats/overview', [PermissionController::class, 'stats'])->middleware('permission:manage permissions|view permissions');
+    
     // Role and Permission management routes
     Route::middleware('permission:manage roles')->group(function () {
         Route::apiResource('roles', RoleController::class);
@@ -42,8 +45,9 @@ Route::middleware('auth:api')->group(function () {
     // Allow viewing roles and permissions for users with appropriate permissions
     Route::get('roles', [RoleController::class, 'index'])->middleware('permission:manage roles|view roles');
     Route::get('permissions', [PermissionController::class, 'index'])->middleware('permission:manage permissions|view permissions');
+    Route::get('permissions/all', [PermissionController::class, 'all'])->middleware('permission:manage roles|view roles|manage permissions|view permissions');
     Route::get('roles/{role}', [RoleController::class, 'show'])->middleware('permission:manage roles|view roles');
-    Route::get('permissions/{permission}', [PermissionController::class, 'show'])->middleware('permission:manage permissions|view permissions');
+    Route::get('permissions/{permission}', [PermissionController::class, 'show'])->middleware('permission:manage permissions|view permissions')->where('permission', '[0-9]+');
 });
 
 // Fallback for undefined routes
