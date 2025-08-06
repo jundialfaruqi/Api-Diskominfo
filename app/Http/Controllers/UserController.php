@@ -86,7 +86,7 @@ class UserController extends Controller
                 'password.min' => 'Password minimal 8 karakter',
                 'password.confirmed' => 'Konfirmasi password tidak cocok',
                 'role.required' => 'Role wajib dipilih',
-                'role.in' => 'Role harus super_admin atau editor',
+                'role.in' => 'Role harus super_admin, admin, atau editor',
                 'department.required' => 'Department wajib diisi',
                 'phone.max' => 'Nomor telepon maksimal 20 karakter',
                 'status.required' => 'Status wajib dipilih',
@@ -183,7 +183,7 @@ class UserController extends Controller
                     Rule::unique('users')->ignore($user->id)
                 ],
                 'password' => 'nullable|string|min:8|confirmed',
-                'role' => 'required|in:super_admin,editor',
+                'role' => 'required|in:super_admin,admin,editor',
                 'department' => 'required|string|max:255',
                 'phone' => 'nullable|string|max:20',
                 'status' => 'required|in:active,inactive'

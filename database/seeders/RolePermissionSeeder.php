@@ -25,12 +25,15 @@ class RolePermissionSeeder extends Seeder
             'create users',
             'edit users',
             'delete users',
-            'manage roles',
             'view roles',
-            'manage permissions',
+            'create roles',
+            'edit roles',
+            'delete roles',
             'view permissions',
+            'create permissions',
+            'edit permissions',
+            'delete permissions',
             'view dashboard',
-            'manage news',
             'view news',
         ];
 
@@ -40,10 +43,24 @@ class RolePermissionSeeder extends Seeder
 
         // Create roles and assign permissions
         $superAdminRole = Role::firstOrCreate(['name' => 'super_admin', 'guard_name' => 'web']);
+        $adminRole = Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);
         $editorRole = Role::firstOrCreate(['name' => 'editor', 'guard_name' => 'web']);
 
         // Super Admin gets all permissions
         $superAdminRole->givePermissionTo(Permission::all());
+
+        // Admin gets most permissions except role/permission management
+        $adminRole->givePermissionTo([
+            'view dashboard',
+            'view users',
+            'create users',
+            'edit users',
+            'delete users',
+            'view roles',
+            'view permissions',
+            'view news',
+            'manage news'
+        ]);
 
         // Editor gets limited permissions
         $editorRole->givePermissionTo([
@@ -52,8 +69,12 @@ class RolePermissionSeeder extends Seeder
             'create users',
             'edit users',
             'delete users',
+            'view roles',
+            'view permissions',
+            'create permissions',
+            'edit permissions',
+            'delete permissions',
             'view news',
-            'manage news'
         ]);
 
         // Create super admin user

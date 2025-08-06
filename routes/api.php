@@ -31,29 +31,31 @@ Route::middleware('auth:api')->group(function () {
     Route::put('users/{user}', [UserController::class, 'update'])->middleware('permission:edit users');
     Route::delete('users/{user}', [UserController::class, 'destroy'])->middleware('permission:delete users');
     
-    // Permission statistics - accessible to users with permission management access
-    Route::get('permissions/stats/overview', [PermissionController::class, 'stats'])->middleware('permission:manage permissions|view permissions');
+    // Permission statistics - accessible to users with view permissions
+    Route::get('permissions/stats/overview', [PermissionController::class, 'stats'])->middleware('permission:view permissions');
     
-    // Role and Permission management routes
-    Route::middleware('permission:manage roles')->group(function () {
-        Route::apiResource('roles', RoleController::class);
-        Route::post('roles/{role}/assign-user', [RoleController::class, 'assignToUser']);
-        Route::post('roles/{role}/remove-user', [RoleController::class, 'removeFromUser']);
-    });
+    // Role management routes
+    Route::get('roles', [RoleController::class, 'index'])->middleware('permission:view roles');
+    Route::get('roles/{role}', [RoleController::class, 'show'])->middleware('permission:view roles');
+    Route::post('roles', [RoleController::class, 'store'])->middleware('permission:create roles');
+    Route::put('roles/{role}', [RoleController::class, 'update'])->middleware('permission:edit roles');
+    Route::delete('roles/{role}', [RoleController::class, 'destroy'])->middleware('permission:delete roles');
+    Route::post('roles/{role}/assign-user', [RoleController::class, 'assignToUser'])->middleware('permission:edit roles');
+    Route::post('roles/{role}/remove-user', [RoleController::class, 'removeFromUser'])->middleware('permission:edit roles');
     
-    Route::middleware('permission:manage permissions')->group(function () {
-        Route::apiResource('permissions', PermissionController::class);
-        Route::get('permissions/grouped', [PermissionController::class, 'grouped']);
-        Route::post('permissions/{permission}/assign-user', [PermissionController::class, 'assignToUser']);
-        Route::post('permissions/{permission}/remove-user', [PermissionController::class, 'removeFromUser']);
-    });
+    // Permission management routes
+    Route::get('permissions', [PermissionController::class, 'index'])->middleware('permission:view permissions');
+    Route::get('permissions/{permission}', [PermissionController::class, 'show'])->middleware('permission:view permissions');
+    Route::post('permissions', [PermissionController::class, 'store'])->middleware('permission:create permissions');
+    Route::put('permissions/{permission}', [PermissionController::class, 'update'])->middleware('permission:edit permissions');
+    Route::delete('permissions/{permission}', [PermissionController::class, 'destroy'])->middleware('permission:delete permissions');
+    Route::get('permissions/grouped', [PermissionController::class, 'grouped'])->middleware('permission:view permissions');
+    Route::post('permissions/{permission}/assign-user', [PermissionController::class, 'assignToUser'])->middleware('permission:edit permissions');
+    Route::post('permissions/{permission}/remove-user', [PermissionController::class, 'removeFromUser'])->middleware('permission:edit permissions');
     
-    // Allow viewing roles and permissions for users with appropriate permissions
-    Route::get('roles', [RoleController::class, 'index'])->middleware('permission:manage roles|view roles');
-    Route::get('permissions', [PermissionController::class, 'index'])->middleware('permission:manage permissions|view permissions');
-    Route::get('permissions/all', [PermissionController::class, 'all'])->middleware('permission:manage roles|view roles|manage permissions|view permissions');
-    Route::get('roles/{role}', [RoleController::class, 'show'])->middleware('permission:manage roles|view roles');
-    Route::get('permissions/{permission}', [PermissionController::class, 'show'])->middleware('permission:manage permissions|view permissions')->where('permission', '[0-9]+');
+    // Allow viewing all permissions for role management
+    Route::get('permissions/all', [PermissionController::class, 'all'])->middleware('permission:view roles|view permissions');
+    Route::get('permissions/{permission}', [PermissionController::class, 'show'])->middleware('permission:view permissions')->where('permission', '[0-9]+');
 });
 
 // Fallback for undefined routes
