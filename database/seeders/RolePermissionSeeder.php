@@ -48,6 +48,10 @@ class RolePermissionSeeder extends Seeder
         // Editor gets limited permissions
         $editorRole->givePermissionTo([
             'view dashboard',
+            'view users',
+            'create users',
+            'edit users',
+            'delete users',
             'view news',
             'manage news'
         ]);

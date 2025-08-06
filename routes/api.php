@@ -19,11 +19,17 @@ Route::middleware('auth:api')->group(function () {
     Route::get('user', [AuthController::class, 'me']);
     Route::post('logout', [AuthController::class, 'logout']);
     
-    // User CRUD routes - restricted to super_admin only
-    Route::middleware('super_admin')->group(function () {
+    // User CRUD routes - accessible to users with view users permission
+    Route::middleware('permission:view users')->group(function () {
         Route::get('users/stats/overview', [UserController::class, 'stats']);
-        Route::apiResource('users', UserController::class);
+        Route::get('users', [UserController::class, 'index']);
+        Route::get('users/{user}', [UserController::class, 'show']);
     });
+    
+    // User management routes - based on permissions
+    Route::post('users', [UserController::class, 'store'])->middleware('permission:create users');
+    Route::put('users/{user}', [UserController::class, 'update'])->middleware('permission:edit users');
+    Route::delete('users/{user}', [UserController::class, 'destroy'])->middleware('permission:delete users');
     
     // Permission statistics - accessible to users with permission management access
     Route::get('permissions/stats/overview', [PermissionController::class, 'stats'])->middleware('permission:manage permissions|view permissions');
